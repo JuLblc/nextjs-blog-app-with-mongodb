@@ -1,121 +1,72 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 const { connectToDatabase } = require('../../lib/mongodb');
-const ObjectId = require('mongodb').ObjectId;
+
+import Post from '../../models/Post.model'
 
 export default async function handler(req, res) {
-  // switch the methods
-  switch (req.method) {
-    case 'GET': {
-      return getPosts(req, res);
-    }
+  const { method } = req
 
-    case 'POST': {
-      return addPost(req, res);
-    }
+  await connectToDatabase()
 
-    case 'PUT': {
-      return updatePost(req, res);
-    }
+  switch (method) {
+    case 'GET':
+      try {
+        const posts = await Post.find({})
+        res.status(200).json({ success: true, message: posts })
+      } catch (error) {
+        res.status(400).json({ success: false })
+      }
+      break
 
-    case 'DELETE': {
-      return deletePost(req, res);
-    }
-  }
-}
+    case 'POST':
+      try {
 
-async function getPosts(req, res) {
-  try {
-    // connect to the database
-    let { db } = await connectToDatabase();
-    // fetch the posts
-    let posts = await db
-      .collection('posts')
-      .find({})
-      .sort({ published: -1 })
-      .toArray();
-    // return the posts
-    return res.json({
-      message: JSON.parse(JSON.stringify(posts)),
-      success: true,
-    });
-  } catch (error) {
-    // return the error
-    return res.json({
-      message: new Error(error).message,
-      success: false,
-    });
-  }
-}
+        const { title, content, published, createdAt } = req.body
 
-async function addPost(req, res) {
-  try {
-    // connect to the database
-    let { db } = await connectToDatabase();
-    // add the post
-    await db.collection('posts').insertOne(JSON.parse(req.body));
-    // return a message
-    return res.json({
-      message: 'Post added successfully',
-      success: true,
-    });
-  } catch (error) {
-    // return an error
-    return res.json({
-      message: new Error(error).message,
-      success: false,
-    });
-  }
-}
+        const post = new Post({
+          title: title,
+          content: content,
+          published: published,
+          createdAt: createdAt,
+        });
 
-async function updatePost(req, res) {
-  try {
-    // connect to the database
-    let { db } = await connectToDatabase();
+        await post.save();
 
-    // update the published status of the post
-    await db.collection('posts').updateOne(
-      {
-        _id: new ObjectId(req.body),
-      },
-      { $set: { published: true } }
-    );
+        res.status(201).json({ success: true, message: 'Post added successfully!' })
+      } catch (error) {
+        res.status(400).json({ success: false })
+      }
+      break
 
-    // return a message
-    return res.json({
-      message: 'Post updated successfully',
-      success: true,
-    });
-  } catch (error) {
+    case 'PUT':
+      try {
+        await Post.findByIdAndUpdate(req.body.postId, { published: true })
+        res.status(201).json({
+          message: 'Post updated successfully',
+          success: true,
+        });
+      } catch (error) {
+        res.status(400).json({ success: false })
+      }
+      break
 
-    // return an error
-    return res.json({
-      message: new Error(error).message,
-      success: false,
-    });
-  }
-}
-
-async function deletePost(req, res) {
-  try {
-      // Connecting to the database
-      let { db } = await connectToDatabase();
-
-      // Deleting the post
-      await db.collection('posts').deleteOne({
-          _id: new ObjectId(req.body),
-      });
-
-      // returning a message
-      return res.json({
+    case 'DELETE':
+      try {
+        await Post.deleteOne({
+          _id: req.body,
+        });
+        res.status(200).json({
           message: 'Post deleted successfully',
           success: true,
-      });
-  } catch (error) {
+        });
 
-      // returning an error
-      return res.json({
-          message: new Error(error).message,
-          success: false,
-      });
+      } catch (error) {
+        res.status(400).json({ success: false })
+      }
+      break
+
+    default:
+      res.status(400).json({ success: false })
+      break
   }
 }

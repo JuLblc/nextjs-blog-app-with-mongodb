@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 
+import axios from 'axios';
+
 const PostCard = ({ post }) => {
 
   const [publishing, setPublishing] = useState(false);
@@ -14,10 +16,7 @@ const PostCard = ({ post }) => {
 
     try {
       // Update post
-      await fetch('/api/posts', {
-        method: 'PUT',
-        body: postId,
-      });
+      await axios.put('/api/posts', {postId})
 
       // reset the publishing state
       setPublishing(false);
@@ -37,10 +36,7 @@ const PostCard = ({ post }) => {
 
     try {
       // Delete post
-      await fetch('/api/posts', {
-        method: 'DELETE',
-        body: postId,
-      });
+      await axios.delete('/api/posts',{data: postId})
 
       // reset the deleting state
       setDeleting(false);

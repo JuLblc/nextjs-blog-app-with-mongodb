@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import axios from 'axios';
 
 import Nav from '../components/Nav';
 import PostCard from '../components/PostCard';
@@ -40,13 +41,11 @@ export async function getServerSideProps(ctx) {
   let { DEV_URL, PROD_URL } = process.env;
 
   // request posts from api
-  let response = await fetch(`${dev ? DEV_URL : PROD_URL}/api/posts`);
-  // extract the data
-  let data = await response.json();
+  const response = await axios.get(`${dev ? DEV_URL : PROD_URL}/api/posts`)
 
   return {
     props: {
-      posts: data['message'],
+      posts: response.data.message,
     },
   };
 }

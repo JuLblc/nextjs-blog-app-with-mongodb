@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import axios from 'axios';
+
 import Nav from '../components/Nav';
 import styles from '../styles/Home.module.css';
 
@@ -19,32 +21,15 @@ const AddPost = () => {
     // fields check
     if (!title || !content) return setError('All fields are required');
 
-    // post structure
-    let post = {
-      title,
-      content,
-      published: false,
-      createdAt: new Date().toISOString(),
-    };
-    // save the post
-    let response = await fetch('/api/posts', {
-      method: 'POST',
-      body: JSON.stringify(post),
-    });
-
-    // get the data
-    let data = await response.json();
-
-    if (data.success) {
-      // reset the fields
-      setTitle('');
-      setContent('');
-      // set the message
-      return setMessage(data.message);
-    } else {
-      // set the error
-      return setError(data.message);
-    }
+    axios.post('/api/posts', { title, content, published: false, createdAt: new Date().toISOString() })
+      .then(response => {
+        // reset the fields
+        setTitle('');
+        setContent('');
+        // set the message
+        setMessage(response.data.message);
+      })
+      .catch(err => setError(response.data.message))
   };
 
   return (
